@@ -1,0 +1,655 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+local VIM = game:GetService("VirtualInputManager")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+local State = {
+    AutoFarm = false,
+    FarmThread = nil,
+    ESP = true,
+    Aimbot = false,
+    AimbotFOV = 150,
+    AimbotSmooth = 3,
+    ForceFarmEvent = false,
+}
+
+local FarmPoints = {
+    Vector3.new(-5774.112, 4.791, 790.977),
+    Vector3.new(-5780.186, 4.871, 795.276),
+    Vector3.new(-5788.657, 5.037, 801.847),
+    Vector3.new(-5798.568, 5.08, 803.292),
+    Vector3.new(-5805.831, 5.091, 801.87),
+    Vector3.new(-5809.395, 5.06, 795.572),
+    Vector3.new(-5807.513, 4.956, 775.678),
+    Vector3.new(-5799.881, 4.924, 771.341),
+    Vector3.new(-5796.688, 4.935, 762.417),
+    Vector3.new(-5799.951, 4.944, 751.247),
+    Vector3.new(-5792.35, 4.804, 746.708),
+    Vector3.new(-5798.869, 4.811, 733.347),
+    Vector3.new(-5804.769, 4.929, 735.804),
+    Vector3.new(-5811.888, 4.989, 719.865),
+    Vector3.new(-5823.434, 5.033, 723.318),
+    Vector3.new(-5837.409, 4.922, 726.687),
+    Vector3.new(-5844.74, 4.932, 733.9),
+    Vector3.new(-5865.454, 4.815, 744.57),
+    Vector3.new(-5877.794, 4.912, 747.939),
+    Vector3.new(-5899.823, 4.92, 753.069),
+    Vector3.new(-5906.275, 4.895, 757.081),
+    Vector3.new(-5916.896, 4.738, 762.143),
+    Vector3.new(-5907.223, 4.804, 775.585),
+    Vector3.new(-5900.468, 4.891, 774.409),
+    Vector3.new(-5889.983, 4.947, 778.325),
+    Vector3.new(-5805.853, 5.052, 787.604),
+    Vector3.new(-5813.453, 4.961, 782.622),
+    Vector3.new(-5814.189, 4.967, 788.321),
+    Vector3.new(-5812.808, 4.967, 781.883),
+    Vector3.new(-5814.038, 5.047, 775.044),
+    Vector3.new(-5816.177, 5.05, 767.584),
+    Vector3.new(-5836.914, 5.116, 770.339),
+    Vector3.new(-5858.344, 4.987, 756.518),
+    Vector3.new(-5873.229, 4.938, 757.857),
+    Vector3.new(-5884.208, 4.937, 755.231),
+    Vector3.new(-5823.24, 4.905, 795.556),
+    Vector3.new(-5824.981, 4.964, 786.766),
+    Vector3.new(-5832.146, 5.066, 776.668),
+    Vector3.new(-5838.22, 5.122, 770.526),
+    Vector3.new(-5850.099, 5.088, 765.28),
+    Vector3.new(-5860.786, 4.981, 758.679),
+    Vector3.new(-5858.673, 4.946, 751.715),
+    Vector3.new(-5866.396, 4.765, 738.114),
+    Vector3.new(-5876.356, 4.804, 675.745),
+    Vector3.new(-5871.748, 4.893, 666.589),
+    Vector3.new(-5807.513, 4.964, 775.678),
+    Vector3.new(-5803.065, 4.994, 769.926),
+    Vector3.new(-5842.411, 4.838, 663.373),
+    Vector3.new(-5870.272, 5.027, 652.435),
+    Vector3.new(-5873.002, 5.066, 647.365),
+    Vector3.new(-5876.784, 5.091, 640.975),
+    Vector3.new(-5887.184, 5.029, 633.252),
+    Vector3.new(-5921.929, 5.035, 636.875),
+    Vector3.new(-5924.158, 4.941, 695.66),
+    Vector3.new(-5941.261, 4.955, 693.263),
+    Vector3.new(-5949.5, 4.758, 692.989),
+    Vector3.new(-5948.512, 4.843, 689.415),
+    Vector3.new(-5952.588, 4.824, 680.084),
+    Vector3.new(-5827.627, 5.019, 779.192)
+}
+
+local Waypoints = {
+    {Name = "Traphouse", Pos = Vector3.new(-6507.73, 13.838, 1537.153)},
+    {Name = "Police Department", Pos = Vector3.new(-1845.968, 13.304, 285.765)},
+    {Name = "Sheriff", Pos = Vector3.new(-8083.208, 26.009, 6637.696)},
+    {Name = "Clothing", Pos = Vector3.new(-1676.885, 3.618, 723.216)},
+    {Name = "Gun Store", Pos = Vector3.new(-8817.523, 8.813, 801.961)},
+    {Name = "Medical", Pos = Vector3.new(-1227.37, 3.55, -1849.743)}
+}
+
+local SELL_POINT = Vector3.new(-5823.004, 4.697, 667.102)
+
+local function getChar()
+    return LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+end
+
+local function hardTriggerPrompt(prompt)
+    if not prompt.Enabled then return end
+    pcall(function() fireproximityprompt(prompt) end)
+    if getconnections then
+        pcall(function()
+            local connections = getconnections(prompt.Triggered)
+            for _, conn in ipairs(connections) do
+                if conn.Fire then conn:Fire(0) end
+            end
+        end)
+    end
+    pcall(function()
+        local key = Enum.KeyCode.E
+        if prompt.KeyboardKeyCode then key = prompt.KeyboardKeyCode end
+        VIM:SendKeyEvent(true, key, false, game)
+        VIM:SendKeyEvent(false, key, false, game)
+    end)
+end
+
+local function autoSelectJob(targetJob)
+    local Menu = PlayerGui:FindFirstChild("Menu")
+    local Container = Menu and Menu:FindFirstChild("Container")
+    local JobSelection = Container and Container:FindFirstChild("JobSelection")
+    if not JobSelection then return end
+    local Cards = JobSelection:FindFirstChild("Cards")
+    if not Cards then return end
+    
+    if not JobSelection.Visible then
+        local JobAction = ReplicatedStorage:FindFirstChild("Network"):FindFirstChild("Events"):FindFirstChild("JobAction")
+        if JobAction then JobAction:FireServer("View") end
+        task.wait(0.5)
+    end
+    for _, child in ipairs(Cards:GetChildren()) do
+        local jobId = child:GetAttribute("JobId") or child.Name
+        if child:IsA("Frame") and jobId == targetJob then
+            local Select = child:FindFirstChild("Select")
+            if Select and Select:IsA("ImageButton") then
+                local Label = Select:FindFirstChild("ActionTitle")
+                if Label and (Label.Text == "SELECT" or Label.Text == "OFF-DUTY") then
+                    Select:Activate()
+                    return true
+                end
+            end
+        end
+    end
+    return false
+end
+
+local Window = Rayfield:CreateWindow({
+    Name = "SANITY",
+    LoadingTitle = "// SNTY.EXE //",
+    LoadingSubtitle = "SANITY",
+    Theme = "Dark",
+    ConfigurationSaving = {Enabled = true, FolderName = "Snty", FileName = "Config"},
+    KeySystem = true,
+    KeySettings = {
+        Title = "WORLDWIDE",
+        Subtitle = "SANITY",
+        Note = "FUCKALL",
+        FileName = "Sntykey",
+        SaveKey = false, -- NO SAVE
+        GrabKeyFromSite = false,
+        Key = {"403SNTY"}
+    }
+})
+
+local FarmTab = Window:CreateTab("Auto Farm", nil)
+local FarmSec = FarmTab:CreateSection("Automatic")
+
+FarmTab:CreateToggle({
+    Name = "Enable Auto Farm",
+    CurrentValue = false,
+    Flag = "AutoFarm",
+    Callback = function(Value)
+        State.AutoFarm = Value
+        if Value then
+            State.FarmThread = task.spawn(function()
+                while State.AutoFarm do
+                    local shuffledPoints = {}
+                    for i, v in ipairs(FarmPoints) do table.insert(shuffledPoints, v) end
+                    for i = #shuffledPoints, 2, -1 do
+                        local j = math.random(i)
+                        shuffledPoints[i], shuffledPoints[j] = shuffledPoints[j], shuffledPoints[i]
+                    end
+
+                    for i, pos in ipairs(shuffledPoints) do
+                        if not State.AutoFarm then break end
+                        pcall(function()
+                            local char = getChar()
+                            local root = char:FindFirstChild("HumanoidRootPart")
+                            local hum = char:FindFirstChildOfClass("Humanoid")
+                            
+                            if root and hum then
+                                root.CFrame = CFrame.new(pos)
+                                root.Velocity = Vector3.new(0, 0, 0)
+                                task.wait(0.1) 
+                                
+                                local startTime = tick()
+                                while tick() - startTime < 2.5 do
+                                    for _, obj in ipairs(workspace:GetDescendants()) do
+                                        if obj:IsA("ProximityPrompt") and obj.Enabled then
+                                            local parent = obj.Parent
+                                            if parent and parent:IsA("BasePart") and (parent.Position - pos).Magnitude <= 25 then
+                                                hardTriggerPrompt(obj)
+                                            end
+                                        end
+                                    end
+                                    task.wait(0.2)
+                                    if not State.AutoFarm then break end
+                                end
+                            end
+                        end)
+                    end
+                    
+                    if State.AutoFarm then
+                        local char = getChar()
+                        if char and char:FindFirstChild("HumanoidRootPart") then
+                            char.HumanoidRootPart.CFrame = CFrame.new(SELL_POINT)
+                            task.wait(0.2)
+                            for _, obj in ipairs(workspace:GetDescendants()) do
+                                if obj:IsA("ProximityPrompt") and obj.Enabled then
+                                    local parent = obj.Parent
+                                    if parent and parent:IsA("BasePart") and (parent.Position - SELL_POINT).Magnitude <= 25 then
+                                        hardTriggerPrompt(obj)
+                                    end
+                                end
+                            end
+                        end
+                    end
+                    task.wait(0.5) 
+                end
+            end)
+        else
+            if State.FarmThread then
+                task.cancel(State.FarmThread)
+                State.FarmThread = nil
+            end
+        end
+    end,
+})
+
+FarmTab:CreateButton({
+    Name = "Teleport to Sell Point",
+    Callback = function()
+        local char = getChar()
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            char.HumanoidRootPart.CFrame = CFrame.new(SELL_POINT)
+        end
+    end,
+})
+
+FarmTab:CreateToggle({
+    Name = "Force Farm Event (Double Price)",
+    CurrentValue = false,
+    Flag = "ForceFarmEvent",
+    Callback = function(Value)
+        State.ForceFarmEvent = Value
+        if Value then
+            local cmdrRemote = ReplicatedStorage:FindFirstChild("CmdrClient") or ReplicatedStorage:FindFirstChild("Cmdr")
+            if cmdrRemote then
+                local remoteEvent = cmdrRemote:FindFirstChild("RemoteEvent") or cmdrRemote:FindFirstChild("CmdrRemote")
+                if remoteEvent then remoteEvent:FireServer("farming", {60}) end
+            end
+        else
+            local cmdrRemote = ReplicatedStorage:FindFirstChild("CmdrClient") or ReplicatedStorage:FindFirstChild("Cmdr")
+            if cmdrRemote then
+                local remoteEvent = cmdrRemote:FindFirstChild("RemoteEvent") or cmdrRemote:FindFirstChild("CmdrRemote")
+                if remoteEvent then remoteEvent:FireServer("farming", {0}) end
+            end
+        end
+    end,
+})
+
+local TPTab = Window:CreateTab("Teleport", nil)
+local TPSec = TPTab:CreateSection("Locations")
+
+for _, wp in ipairs(Waypoints) do
+    TPTab:CreateButton({
+        Name = "TP to " .. wp.Name,
+        Callback = function()
+            local char = getChar()
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                char.HumanoidRootPart.CFrame = CFrame.new(wp.Pos)
+            end
+        end,
+    })
+end
+
+local JobTab = Window:CreateTab("Jobs", nil)
+local JobSec = JobTab:CreateSection("Auto Assign")
+
+JobTab:CreateButton({Name = "Become Police", Callback = function() autoSelectJob("Police") end})
+JobTab:CreateButton({Name = "Become Criminal", Callback = function() autoSelectJob("Criminal") end})
+JobTab:CreateButton({Name = "Become Sheriff", Callback = function() autoSelectJob("Sheriff") end})
+JobTab:CreateButton({Name = "Become Medic", Callback = function() autoSelectJob("Medic") end})
+
+local VisualTab = Window:CreateTab("Visuals", nil)
+local VisualSec = VisualTab:CreateSection("Players")
+
+VisualTab:CreateToggle({
+    Name = "Player ESP",
+    CurrentValue = true,
+    Flag = "ESP",
+    Callback = function(Value) State.ESP = Value end,
+})
+
+local AimbotTab = Window:CreateTab("Aimbot", nil)
+local AimSec = AimbotTab:CreateSection("Aiming")
+
+AimbotTab:CreateToggle({
+    Name = "Enable Aimbot (Hold Right Click)",
+    CurrentValue = false,
+    Flag = "Aimbot",
+    Callback = function(Value) State.Aimbot = Value end,
+})
+
+AimbotTab:CreateSlider({
+    Name = "FOV",
+    Range = {50, 500},
+    Increment = 10,
+    Suffix = "px",
+    CurrentValue = 150,
+    Flag = "AimbotFOV",
+    Callback = function(Value) State.AimbotFOV = Value end,
+})
+
+AimbotTab:CreateSlider({
+    Name = "Smoothness",
+    Range = {1, 20},
+    Increment = 1,
+    Suffix = "x",
+    CurrentValue = 3,
+    Flag = "AimbotSmooth",
+    Callback = function(Value) State.AimbotSmooth = Value end,
+})
+
+local ScriptsTab = Window:CreateTab("Scripts", nil)
+local ScriptsSec = ScriptsTab:CreateSection("Loaders")
+
+ScriptsTab:CreateButton({Name = "MONSY V6", Callback = function() loadstring(game:HttpGet("https://api.rubis.app/v2/scrap/wFnRLrBT98LRuJtp/raw",true))() end})
+ScriptsTab:CreateButton({Name = "AIMBOT (EXUNYS)", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/Exunys/Aimbot-V3/main/src/Aimbot.lua"))() if type(ExunysDeveloperAimbot) == "function" then ExunysDeveloperAimbot() end end})
+ScriptsTab:CreateButton({Name = "DEX EXPLORER", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/BigBoyTimme/New.Loadstring.Scripts/refs/heads/main/Dex.Explorer"))() end})
+ScriptsTab:CreateButton({Name = "INFINITE YIELD", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))() end})
+ScriptsTab:CreateButton({Name = "COPY MAP V2", Callback = function() loadstring(game:HttpGet('https://pastefy.app/lum2i8Er/raw'))() end})
+ScriptsTab:CreateButton({Name = "TOUCH FLING", Callback = function() loadstring(game:HttpGet("https://pastebin.com/raw/LgZwZ7ZB", true))() end})
+ScriptsTab:CreateButton({Name = "SNTS MAIN CHEAT", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/Kogoronegirito/SNTS-MAIN-CHEAT/refs/heads/main/SNTS%20MAIN%20CHEAT"))(SNTSMAINCHEAT) end})
+
+local ShopTab = Window:CreateTab("Shop", nil)
+local ShopSec = ShopTab:CreateSection("Auto Purchase")
+
+local function buyItem(shopName, itemName, price)
+    local purchased = false
+    local char = getChar()
+    
+    pcall(function()
+        local rs = game:GetService("ReplicatedStorage")
+        local purchaseEvent = rs:FindFirstChild("PurchaseEvent") or rs:FindFirstChild("BuyItem") or rs:FindFirstChild("ShopPurchase") or rs:FindFirstChild("Purchase")
+        if purchaseEvent and purchaseEvent:IsA("RemoteEvent") then
+            purchaseEvent:FireServer(shopName, itemName, price)
+            purchased = true
+        end
+        local shopFolder = rs:FindFirstChild(shopName) or rs:FindFirstChild("Shared")
+        if shopFolder then
+            local events = shopFolder:FindFirstChild("Events") or shopFolder:FindFirstChild("Remotes")
+            if events then
+                local buyRemote = events:FindFirstChild("Purchase") or events:FindFirstChild("Buy")
+                if buyRemote and buyRemote:IsA("RemoteEvent") then
+                    buyRemote:FireServer(itemName, price)
+                    purchased = true
+                end
+            end
+        end
+    end)
+
+    if not purchased and char and char:FindFirstChild("HumanoidRootPart") then
+        local shopDisplays = workspace:FindFirstChild("ShopDisplays")
+        if shopDisplays then
+            for _, display in ipairs(shopDisplays:GetDescendants()) do
+                if display:IsA("Model") or display:IsA("Part") then
+                    local displayName = display.Name:lower()
+                    if displayName:find(itemName:lower()) or displayName:find(shopName:lower()) then
+                        for _, prompt in ipairs(display:GetDescendants()) do
+                            if prompt:IsA("ProximityPrompt") then
+                                local part = prompt.Parent
+                                if part:IsA("BasePart") then
+                                    char.HumanoidRootPart.CFrame = part.CFrame * CFrame.new(0, 0, 4)
+                                    task.wait(0.5)
+                                    hardTriggerPrompt(prompt)
+                                    purchased = true
+                                    break
+                                end
+                            end
+                        end
+                    end
+                end
+                if purchased then break end
+            end
+        end
+    end
+end
+
+ShopTab:CreateButton({Name = "Buy Silenced Pistol (4000)", Callback = function() buyItem("Blackmarket", "Silenced Pistol", 4000) end})
+ShopTab:CreateButton({Name = "Buy AK-47 (6000)", Callback = function() buyItem("Blackmarket", "AK-47", 6000) end})
+ShopTab:CreateButton({Name = "Buy Armor (2000)", Callback = function() buyItem("Armory", "Armor", 2000) end})
+ShopTab:CreateButton({Name = "Buy Coffee (25)", Callback = function() buyItem("Eatery", "Coffee", 25) end})
+
+ShopTab:CreateButton({
+    Name = "Rent BMX (Request Event)",
+    Callback = function()
+        local success = false
+        local char = getChar()
+        
+        pcall(function()
+            local rs = game:GetService("ReplicatedStorage")
+            for _, obj in ipairs(rs:GetDescendants()) do
+                if obj:IsA("Folder") and obj:FindFirstChild("Request") and obj:FindFirstChild("StateChanged") then
+                    local requestEvent = obj:FindFirstChild("Request")
+                    if requestEvent:IsA("RemoteEvent") or requestEvent:IsA("RemoteFunction") then
+                        if requestEvent:IsA("RemoteEvent") then
+                            requestEvent:FireServer("BMX")
+                        else
+                            requestEvent:InvokeServer("BMX")
+                        end
+                        success = true
+                        break
+                    end
+                end
+            end
+        end)
+
+if not success and char and char:FindFirstChild("HumanoidRootPart") then
+            local shopDisplays = workspace:FindFirstChild("ShopDisplays")
+            if shopDisplays then
+                for _, v in ipairs(shopDisplays:GetDescendants()) do
+                    if v:IsA("ProximityPrompt") and v.Enabled then
+                        if v.ActionText:lower():find("rent") or v.ObjectText:lower():find("bmx") or v.Parent.Name:lower():find("bmx") then
+                            char.HumanoidRootPart.CFrame = v.Parent.CFrame * CFrame.new(0, 0, 4)
+                            task.wait(0.5)
+                            hardTriggerPrompt(v)
+                            success = true
+                            break
+                        end
+                    end
+                end
+            end
+        end
+    end,
+})
+
+local DupeTab = Window:CreateTab("Dupe", nil)
+local DupeSec = DupeTab:CreateSection("Item Duping")
+
+DupeTab:CreateButton({
+    Name = "Dupe Silenced Pistol (Shop Event)",
+    Callback = function()
+        local char = getChar()
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            local success = false
+            pcall(function()
+                local gunShop = ReplicatedStorage:FindFirstChild("GunShop")
+                if gunShop then
+                    local events = gunShop:FindFirstChild("Events")
+                    if events then
+                        local purchase = events:FindFirstChild("Purchase")
+                        if purchase then
+                            purchase:FireServer("Silenced Pistol", 0)
+                            success = true
+                        end
+                    end
+                end
+            end)
+        if not success and char and char:FindFirstChild("HumanoidRootPart") then
+            local shopDisplays = workspace:FindFirstChild("ShopDisplays")
+            if shopDisplays then
+                for _, v in ipairs(shopDisplays:GetDescendants()) do
+                    if v:IsA("ProximityPrompt") and v.Enabled then
+                        if v.ActionText:lower():find("rent") or v.ObjectText:lower():find("bmx") or v.Parent.Name:lower():find("bmx") then
+                            char.HumanoidRootPart.CFrame = v.Parent.CFrame * CFrame.new(0, 0, 4)
+                            task.wait(0.5)
+                            hardTriggerPrompt(v)
+                            success = true
+                            break
+                        end
+                    end
+                end
+            end
+        end
+    end,
+})
+ 
+local DupeTab = Window:CreateTab("Dupe", nil)
+local DupeSec = DupeTab:CreateSection("Item Duping")
+ 
+DupeTab:CreateButton({
+    Name = "Dupe Silenced Pistol (Shop Event)",
+    Callback = function()
+        local char = getChar()
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            local success = false
+            pcall(function()
+                local gunShop = ReplicatedStorage:FindFirstChild("GunShop")
+                if gunShop then
+                    local events = gunShop:FindFirstChild("Events")
+                    if events then
+                        local purchase = events:FindFirstChild("Purchase")
+                        if purchase then
+                            purchase:FireServer("Silenced Pistol", 0)
+                            success = true
+                        end
+                    end
+                end
+            end)
+            
+            if not success then
+                local shopDisplays = workspace:FindFirstChild("ShopDisplays")
+                if shopDisplays then
+                    for _, v in ipairs(shopDisplays:GetDescendants()) do
+                        if v:IsA("ProximityPrompt") and v.Enabled then
+                            if v.Parent.Name:lower():find("silenced") or v.ObjectText:lower():find("silenced") then
+                                char.HumanoidRootPart.CFrame = v.Parent.CFrame * CFrame.new(0, 0, 4)
+                                task.wait(0.5)
+                                hardTriggerPrompt(v)
+                                break
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end,
+})
+ 
+DupeTab:CreateButton({
+    Name = "Drop All Tools",
+    Callback = function()
+        local char = getChar()
+        local humanoid = char and char:FindFirstChildOfClass("Humanoid")
+        local backpack = LocalPlayer:FindFirstChild("Backpack")
+        
+        if humanoid and backpack then
+            for _, tool in ipairs(backpack:GetChildren()) do
+                if tool:IsA("Tool") then
+                    humanoid:EquipTool(tool)
+                    task.wait(0.1)
+                    tool.Parent = workspace
+                end
+            end
+        end
+    end,
+})
+DupeTab:CreateButton({
+    Name = "Auto Buy Silenced Pistol (Loop)",
+    Callback = function()
+        task.spawn(function()
+            for i = 1, 50 do
+                pcall(function()
+                    local gunShop = ReplicatedStorage:FindFirstChild("GunShop")
+                    if gunShop then
+                        local events = gunShop:FindFirstChild("Events")
+                        if events then
+                            local purchase = events:FindFirstChild("Purchase")
+                            if purchase then
+                                purchase:FireServer("Silenced Pistol", 0)
+                            end
+                        end
+                    end
+                end)
+                task.wait(0.1)
+            end
+        end)
+    end,
+})
+ 
+DupeTab:CreateButton({
+    Name = "Trigger Purchase Event (Proximity)",
+    Callback = function()
+        local char = getChar()
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            local shopDisplays = workspace:FindFirstChild("ShopDisplays")
+            if shopDisplays then
+                for _, v in ipairs(shopDisplays:GetDescendants()) do
+                    if v:IsA("ProximityPrompt") and v.Enabled then
+                        if v.ActionText:lower():find("buy") or v.ObjectText:lower():find("buy") then
+                            char.HumanoidRootPart.CFrame = v.Parent.CFrame * CFrame.new(0, 0, 4)
+                            task.wait(0.5)
+                            hardTriggerPrompt(v)
+                            break
+                        end
+                    end
+                end
+            end
+        end
+    end,
+})
+ 
+local ESPObjects = {}
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Thickness = 1
+FOVCircle.Color = Color3.fromRGB(255, 0, 51)
+FOVCircle.Filled = false
+ 
+RunService.RenderStepped:Connect(function()
+    if State.ESP then
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
+                local head = player.Character.Head
+                local headPos, onScreen = Camera:WorldToViewportPoint(head.Position)
+                if not ESPObjects[player] then
+                    ESPObjects[player] = { Line = Drawing.new("Line") }
+                    ESPObjects[player].Line.Color = Color3.fromRGB(255, 255, 255)
+                    ESPObjects[player].Line.Thickness = 1
+                end
+                local esp = ESPObjects[player]
+                if onScreen then
+                    esp.Line.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
+                    esp.Line.To = Vector2.new(headPos.X, headPos.Y)
+                    esp.Line.Visible = true
+                else
+                    esp.Line.Visible = false
+                end
+            end
+        end
+    else
+        for _, v in pairs(ESPObjects) do
+            if v.Line then v.Line.Visible = false end
+        end
+    end
+
+FOVCircle.Position = UIS:GetMouseLocation()
+    FOVCircle.Radius = State.AimbotFOV
+    FOVCircle.Visible = State.Aimbot
+ 
+    if State.Aimbot and UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+        local closest = nil
+        local shortestDist = State.AimbotFOV
+        local mousePos = UIS:GetMouseLocation()
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
+                local headPos, onScreen = Camera:WorldToViewportPoint(player.Character.Head.Position)
+                if onScreen then
+                    local dist = (Vector2.new(headPos.X, headPos.Y) - mousePos).Magnitude
+                    if dist < shortestDist then
+                        shortestDist = dist
+                        closest = player.Character.Head
+                    end
+                end
+            end
+        end
+        if closest then
+            local targetCFrame = CFrame.new(Camera.CFrame.Position, closest.Position)
+            Camera.CFrame = Camera.CFrame:Lerp(targetCFrame, 1 / State.AimbotSmooth)
+        end
+    end
+end)State.AimbotSmooth)
+        end
+    end
+end)
